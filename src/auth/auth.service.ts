@@ -26,27 +26,26 @@ export class AuthService {
 
   isAuthenticketd: boolean = false;
 
-  public async login(loginDto: LoginDto) {
-    const user = await this.userService.findUserByUsername(loginDto.userName);
+public async login(loginDto: LoginDto) {
+  const { userName, password } = loginDto;
 
-    console.log('🔐 Raw input password:', loginDto.password);
-    console.log('🔒 Hashed password from DB:', user.password);
+  const isEmailInput = userName.includes('@'); 
 
-    const isPasswordMatch = await this.hashingProvider.comparePassword(
-      loginDto.password,
-      user.password,
-    );
+  const user = isEmailInput
+    ? await this.userService.findUserByEmail(userName)
+    : await this.userService.findUserByUsername(userName);
 
-    console.log('✅ Password matched?', isPasswordMatch);
+  const isPasswordMatch = await this.hashingProvider.comparePassword(
+    password,
+    user.password,
+  );
 
-    if (!isPasswordMatch) {
-      throw new UnauthorizedException('Invalid credentials!');
-    }
-
-    return this.generateToken(user)
-
+  if (!isPasswordMatch) {
+    throw new UnauthorizedException('Password is wrong!');
   }
 
+  return this.generateToken(user);
+}
 
   public async signup(createUserDto: CreateUserDto) {
     return await this.userService.createUser(createUserDto);

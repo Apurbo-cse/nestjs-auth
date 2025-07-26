@@ -45,6 +45,21 @@ export class UsersService {
   }
 
 
+  // users.service.ts
+  async findUserByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: ['id', 'userName', 'password', 'email'],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User does not exist!');
+    }
+
+    return user;
+  }
+
+
   // 🔹 Create new user
   async createUser(userDto: CreateUserDto) {
     try {
@@ -109,18 +124,18 @@ export class UsersService {
   }
 
   // 🔹 Find user by Username
- public async findUserByUsername(username: string): Promise<User> {
-  const user = await this.userRepository.findOne({
-    where: { userName: username },
-    select: ['id', 'userName', 'password', 'email'],
-  });
+  public async findUserByUsername(username: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { userName: username },
+      select: ['id', 'userName', 'password', 'email'],
+    });
 
-  if (!user) {
-    throw new UnauthorizedException('User does not exist!');
+    if (!user) {
+      throw new UnauthorizedException('User does not exist!');
+    }
+
+    return user;
   }
-
-  return user;
-}
 
   // 🔹 Handle connection or other errors
   private handleDatabaseError(error: any, method: string) {

@@ -14,6 +14,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthorizeGuard } from './auth/guards/authorize.guard';
 import authConfig from './auth/config/auth.config';
 import { JwtModule } from '@nestjs/jwt';
+import { ChatModule } from './gateway/chat/chat.module';
 
 const ENV = process.env.NODE_ENV
 
@@ -21,6 +22,7 @@ const ENV = process.env.NODE_ENV
   imports: [
     UsersModule,
     AuthModule,
+    ChatModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: !ENV ? '.env' : `.env.${ENV.trim()}`,
@@ -45,12 +47,15 @@ const ENV = process.env.NODE_ENV
     ProfileModule,
     PaginationModule,
     ConfigModule.forFeature(authConfig),
-    JwtModule.registerAsync(authConfig.asProvider())
+    JwtModule.registerAsync(authConfig.asProvider()),
+    ChatModule
   ],
   controllers: [AppController],
-  providers: [AppService, {
-    provide: APP_GUARD,
-    useClass: AuthorizeGuard
-  }],
+  providers: [AppService,
+  //    {
+  //   provide: APP_GUARD,
+  //   useClass: AuthorizeGuard
+  // }
+],
 })
 export class AppModule { }

@@ -8,14 +8,17 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
+import { ValidationPipe, UsePipes, forwardRef, Inject } from '@nestjs/common';
+import { CreateChatDto } from './dto/create-chat.dto';
 
 @WebSocketGateway({ cors: true })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   private server: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    @Inject(forwardRef(() => ChatService))
+    private readonly chatService: ChatService,
+  ) {}
 
   afterInit(server: Server) {
     this.server = server;
@@ -30,8 +33,16 @@ export class ChatGateway
   }
 
   @SubscribeMessage('sendMessage')
-  async handleMessage(@MessageBody() data: any) {
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  async handleMessage(@MessageBody() data: CreateChatDto) {
+    console.log('Received message:', data);
     const message = await this.chatService.create(data);
-    this.server.emit('message', message); // broadcast to all
+    // No need to emit here — service will emit after save
+  }
+
+  public broadcastMessage(message: any) {
+    if (this.server) {
+      this.server.emit('message', message);
+    }
   }
 }

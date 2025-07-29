@@ -1,18 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, forwardRef, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ChatGateway } from './chat.gateway';
 import { ChatEntity } from './entities/chat.entity';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectRepository(ChatEntity)
-    private chatRepository: Repository<ChatEntity>
+    private chatRepository: Repository<ChatEntity>,
+
+    @Inject(forwardRef(() => ChatGateway))
+    private chatGateway: ChatGateway,
   ) {}
 
-  create(messageDto: Partial<ChatEntity>) {
+  async create(messageDto: Partial<ChatEntity>) {
+    if (!messageDto.senderId || !messageDto.receiverId || !messageDto.message) {
+      throw new BadRequestException('senderId, receiverId and message are required');
+    }
     const message = this.chatRepository.create(messageDto);
-    return this.chatRepository.save(message);
+    const saved = await this.chatRepository.save(message);
+    this.chatGateway.broadcastMessage(saved); // Emit socket event
+    return saved;
   }
 
   getConversation(user1: string, user2: string) {
